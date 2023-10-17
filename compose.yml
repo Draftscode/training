@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  ui:
+    container_name: tim-ui
+    build:
+      dockerfile: ./projects/shell/Dockerfile
+      context: ./ui
+      target: development
+    volumes:
+      - ./ui/projects/shell:/usr/src/app/projects/shell
+      - /usr/src/app/node_modules
+    ports:
+      - "4200:4200"
+    networks:
+      - tim
+    depends_on:
+      - api
+    links:
+      - api
+
+  api:
+    restart: always
+    container_name: tim-api
+    volumes:
+      # {local dir}:{dir in container}
+      - ./api:/usr/src/app
+      # prevent our host files from overriding
+      - /usr/src/app/node_modules
+    networks:
+      - tim
+    depends_on:
+      - database
+    build:
+      context: ./api
+      target: development
+      args:
+        - APP_NAME=api
+        - LOCAL_PORT=3000
+    ports:
+      - 3000:3000
+
+  database:
+    image: postgres:latest
+    container_name: tim-database
+    environment:
+      - PG_DATA=/var/lib/postgresql/data
+      - POSTGRES_PASSWORD=tim
+      - POSTGRES_USER=tim
+      - POSTGRES_DB=tim
+    ports:
+      - 5432:5432
+    command: -p 5432
+    networks:
+      - tim
+    restart: always
+    volumes:
+     - tim_pgdata:/var/lib/postgresql/data
+
+volumes:
+  tim_pgdata:
+  redis:
+    driver: local
+
+networks:
+  tim:
+    name: tim

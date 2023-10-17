@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  ui:
+    container_name: tim-ui-prod
+    build:
+      dockerfile: ./projects/shell/Dockerfile
+      context: ./ui
+      target: production
+    networks:
+      - tim
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    links:
+      - api
+
+  api:
+    container_name: tim-api-prod
+    restart: always
+    networks:
+      - tim
+    depends_on:
+      - database
+    build:
+      context: ./api
+      target: production
+      args:
+        - APP_NAME=api
+        - LOCAL_PORT=3000
+    ports:
+      - 3000:3000
+
+  database:
+    image: postgres:latest
+    container_name: tim-database
+    environment:
+      - PG_DATA=/var/lib/postgresql/data
+      - POSTGRES_PASSWORD=tim
+      - POSTGRES_USER=tim
+      - POSTGRES_DB=tim
+    ports:
+      - 5432:5432
+    command: -p 5432
+    networks:
+      - tim
+    restart: always
+    volumes:
+     - tim_pgdata:/var/lib/postgresql/data
+
+volumes:
+  tim_pgdata:
+  redis:
+    driver: local
+
+networks:
+  tim:
+    name: tim

@@ -1,0 +1,1 @@
+export const getCyTest = (id: string): string => `[data-cy-test=${id}]`;
